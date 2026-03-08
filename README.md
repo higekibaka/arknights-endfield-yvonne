@@ -74,6 +74,23 @@ projects/arknights-endfield-yvonne/
 - ✅ 输出手法说明
 - ✅ 数据来源追踪
 
+## 🧭 开发规范
+
+- 项目代码规范与 review 基线：`docs/code-style.md`
+- Python 工具配置：`backend/pyproject.toml`
+- PR 模板：`.github/pull_request_template.md`
+
+建议在提交前至少完成：
+
+```bash
+cd backend
+python3 -m py_compile app/main.py app/services/*.py
+bash -n ../start.sh
+
+cd ../frontend
+npm run lint
+```
+
 ## 📝 定时任务
 
 系统已配置每日 08:00 (北京时间) 自动执行数据抓取，可通过以下方式查看：
