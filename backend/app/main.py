@@ -9,13 +9,25 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models.database import EquipmentBuild, SearchLog, TeamComposition, get_db, init_db
+from app.models.database import EquipmentBuild, SearchLog, SessionLocal, TeamComposition, get_db, init_db
+from app.services.seed_data import seed_demo_data_if_empty
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    print("✅ 数据库初始化完成")
+
+    db = SessionLocal()
+    try:
+        seeded = seed_demo_data_if_empty(db)
+    finally:
+        db.close()
+
+    if seeded:
+        print("✅ 数据库初始化完成，已注入演示数据")
+    else:
+        print("✅ 数据库初始化完成")
+
     yield
 
 

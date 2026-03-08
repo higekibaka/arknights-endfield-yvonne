@@ -20,8 +20,9 @@
 cd backend
 
 # 使用 uv 创建虚拟环境并安装依赖（优先 Python 3.12）
+# 若 .venv 已存在可跳过创建
 uv venv --python 3.12
-uv pip install -r requirements.txt
+uv pip install --python .venv/bin/python -r requirements.txt
 
 # 安装Playwright浏览器
 uv run playwright install chromium
@@ -73,6 +74,7 @@ projects/arknights-endfield-yvonne/
 - ✅ 装备配置可视化
 - ✅ 输出手法说明
 - ✅ 数据来源追踪
+- ✅ 首次启动自动注入本地 Demo 数据（数据库为空时），保证页面可演示
 
 ## 📝 定时任务
 
