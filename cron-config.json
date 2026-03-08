@@ -1,0 +1,39 @@
+{
+  "jobs": [
+    {
+      "name": "每日伊冯配队数据收集",
+      "cron": "0 8 * * *",
+      "timezone": "Asia/Shanghai",
+      "agentId": "context",
+      "model": "kimi-k2.5",
+      "task": "搜索并整理《明日方舟终末地》角色'伊冯'的最新配队信息",
+      "steps": [
+        {
+          "action": "tavily_search",
+          "queries": [
+            "明日方舟终末地 伊冯 配队 B站",
+            "终末地 伊冯 阵容 NGA",
+            "Arknights Endfield Yvonne team build"
+          ]
+        },
+        {
+          "action": "scrape_bilibili",
+          "keyword": "明日方舟终末地 伊冯 配队"
+        },
+        {
+          "action": "summarize",
+          "output_format": "structured",
+          "fields": ["team_composition", "equipment", "rotation", "source", "rating"]
+        },
+        {
+          "action": "save_to_database",
+          "database": "sqlite:///doc/arknights-endfield-yvonne/data/arknights_endfield.db"
+        }
+      ],
+      "output": {
+        "summary": "doc/arknights-endfield-yvonne/data/daily_report.md",
+        "notification": true
+      }
+    }
+  ]
+}
