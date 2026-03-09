@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
-import { Sparkles, Users, Sword, TrendingUp, Clock } from 'lucide-react'
+import { Sparkles, Users, Sword, Clock, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
 interface Stats {
@@ -13,15 +13,39 @@ interface Stats {
   last_updated: string
 }
 
+interface TeamComposition {
+  id: number
+  name: string
+  characters: Array<{ name: string; role?: string }>
+  source_platform: string
+  author?: string
+  rating: number
+  created_at: string
+}
+
+const API_BASE = 'http://localhost:8181'
+
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null)
+  const [teams, setTeams] = useState<TeamComposition[]>([])
+  const [loadingTeams, setLoadingTeams] = useState(true)
 
   useEffect(() => {
-    // 获取统计数据
-    fetch('http://localhost:8181/api/stats')
-      .then(res => res.json())
-      .then(data => setStats(data))
-      .catch(err => console.error('获取统计失败:', err))
+    // 获取统计 + 最新配队（首页最小闭环）
+    Promise.all([
+      fetch(`${API_BASE}/api/stats`).then(res => res.json()),
+      fetch(`${API_BASE}/api/teams?limit=3`).then(res => res.json()),
+    ])
+      .then(([statsData, teamsData]) => {
+        setStats(statsData)
+        setTeams(Array.isArray(teamsData) ? teamsData : [])
+      })
+      .catch(err => {
+        console.error('首页数据获取失败:', err)
+      })
+      .finally(() => {
+        setLoadingTeams(false)
+      })
   }, [])
 
   return (
@@ -127,6 +151,36 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 最新配队 */}
+      <section className="py-6 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-display text-3xl font-bold">
+              <span className="bg-gradient-to-r from-ark-purple-400 to-ark-cyan-400 bg-clip-text text-transparent">
+                最新配队
+              </span>
+            </h2>
+            <Link href="/teams" className="text-ark-cyan-300 hover:text-ark-cyan-200 text-sm inline-flex items-center gap-1">
+              查看全部 <ExternalLink className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {loadingTeams ? (
+            <div className="glass rounded-2xl p-8 text-center text-gray-400">加载中...</div>
+          ) : teams.length === 0 ? (
+            <div className="glass rounded-2xl p-8 text-center text-gray-400">
+              暂无配队数据，先去执行一次抓取或导入示例数据。
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {teams.map(team => (
+                <TeamCard key={team.id} team={team} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* 数据来源 */}
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
@@ -155,6 +209,40 @@ export default function Home() {
         </div>
       </section>
     </main>
+  )
+}
+
+function TeamCard({ team }: { team: TeamComposition }) {
+  const topCharacters = team.characters?.slice(0, 4) || []
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.02, y: -4 }}
+      className="glass rounded-2xl p-5 border border-white/10"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs px-2 py-1 rounded-full bg-ark-purple-600/40 text-ark-purple-200">
+          {team.source_platform}
+        </span>
+        <span className="text-xs text-amber-300">★ {team.rating.toFixed(1)}</span>
+      </div>
+
+      <h3 className="font-display text-lg font-bold mb-3 line-clamp-2">{team.name}</h3>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        {topCharacters.map((character, idx) => (
+          <span key={`${character.name}-${idx}`} className="text-xs px-2 py-1 rounded bg-white/10 text-gray-200">
+            {character.name}
+            {character.role ? ` · ${character.role}` : ''}
+          </span>
+        ))}
+      </div>
+
+      <div className="text-xs text-gray-400 flex items-center justify-between">
+        <span>{team.author || '匿名作者'}</span>
+        <span>{new Date(team.created_at).toLocaleDateString()}</span>
+      </div>
+    </motion.div>
   )
 }
 
